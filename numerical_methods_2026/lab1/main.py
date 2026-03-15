@@ -27,7 +27,7 @@ for idx in range(1, n_nodes):
     dist = haversine(*coords[idx - 1], *coords[idx])
     distances.append(distances[-1] + dist)
 
-with open("tabulation.txt", "w") as f:
+with open("../lab0/tabulation.txt", "w") as f:
     f.write(" Latitude | Longitude | Elevation (m) | Distance (m)\n")
     for idx, point in enumerate(results):
         f.write(
