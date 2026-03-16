@@ -12,9 +12,8 @@ with open("data.csv", newline="") as file:
         monthss.append(float(row["Month"]))
         temps.append(float(row["Temp"]))
 
-months = np.array(months)
+months = np.array(monthss)
 temps = np.array(temps)
-
 
 # Формування матриці для МНК
 def build_matrix(x_vals, degree):
@@ -98,18 +97,18 @@ future_temps = eval_poly(future_months, coeffs)
 errors = temps - y_fit
 
 # Вивід результатів
-print("Дисперсії за степенями:")
+print("Ступені дисперсії:")
 for i, v in enumerate(var_list, start=1):
-    print(f"Степінь {i}: {v:.4f}")
-print("\nОптимальний степінь:", best_deg)
+    print(f"{i}: {v:.4f}")
+print("\nОптимальний ступінь:", best_deg)
 
 print("\nКоефіцієнти полінома:")
 for i, c in enumerate(coeffs):
-    print(f"a{i} = {c:.5f}")
+    print(f"k{i} = {c:.5f}")
 
 print("\nПрогноз температур:")
 for m, t in zip(future_months, future_temps):
-    print(f"Місяць {int(m)} -> {t:.2f} °C")
+    print(f"Місяць {int(m)} -> {t:.2f}")
 
 # Графік апроксимації та фактичних даних
 plt.figure(figsize=(10, 6))
