@@ -1,0 +1,114 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ПУНКТ 1: Визначення аналітичної функції f(x) та інтервалу [a, b]
+def f(x):
+    return 50 + 20 * np.sin(np.pi * x / 12) + 5 * np.exp(-0.2 * (x - 12) ** 2)
+
+# ПУНКТ 3: Складена формула Сімпсона
+def simpson_method(func, a, b, n):
+    if n % 2 != 0: n += 1
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    y = func(x)
+    s = y[0] + y[-1] + 4 * np.sum(y[1:-1:2]) + 2 * np.sum(y[2:-2:2])
+    return (h / 3) * s, x, y
+
+# ПУНКТ 9: Адаптивний алгоритм обчислення інтегралу
+def adaptive_simpson(func, a, b, eps, whole=None):
+    if whole is None:
+        whole, _, _ = simpson_method(func, a, b, 2)
+    mid = (a + b) / 2
+    left, _, _ = simpson_method(func, a, mid, 2)
+    right, _, _ = simpson_method(func, mid, b, 2)
+    if abs(left + right - whole) <= 15 * eps:
+        return left + right + (left + right - whole) / 15
+    return adaptive_simpson(func, a, mid, eps / 2, left) + \
+        adaptive_simpson(func, mid, b, eps / 2, right)
+
+# Функції для побудови графіків
+def show_server_load_function(x, y):
+    plt.figure(figsize=(10, 5))
+    plt.plot(x, y, 'b-', label='f(x) Навантаження')
+    plt.fill_between(x, y, color='skyblue', alpha=0.4)
+    plt.title("Графік функції навантаження сервера (Пункт 1)")
+    plt.xlabel("Час (години)")
+    plt.ylabel("Навантаження")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+def show_N_error_dependence(N_values, errors, n_opt, eps_opt):
+    plt.figure(figsize=(10, 5))
+    plt.loglog(N_values, errors, 'ro-', label='Похибка $|I - I_0|$')
+    # Малюємо точку, але без параметра label, щоб прибрати напис з легенди
+    plt.scatter([n_opt], [eps_opt], color='green', s=100, zorder=5)
+    plt.title("Залежність похибки від кількості розбиттів N (Log-Log) (Пункт 4)")
+    plt.xlabel("N")
+    plt.ylabel("Похибка")
+    plt.grid(True, which="both", ls="-")
+    plt.legend()
+    plt.show()
+
+# --- ГОЛОВНИЙ БЛОК ВИКОНАННЯ ---
+def main():
+    a, b = 0, 24
+
+    # ПУНКТ 2: Точне значення інтегралу I0
+    I_exact, _, _ = simpson_method(f, a, b, 1000000)
+
+    # ПУНКТ 4: Дослідження залежності точності від N
+    N_values = [2 ** i for i in range(1, 11)]
+    errors = []
+
+    for n in N_values:
+        I_approx, _, _ = simpson_method(f, a, b, n)
+        errors.append(abs(I_approx - I_exact))
+
+    # Визначення n_opt
+    n_opt = None
+    eps_opt = None
+    for n, e in zip(N_values, errors):
+        if e <= 1e-12:
+            n_opt, eps_opt = n, e
+            break
+    if n_opt is None: n_opt, eps_opt = N_values[-1], errors[-1]
+
+    # Візуалізація
+    _, x_f, y_f = simpson_method(f, a, b, 1000)
+    show_server_load_function(x_f, y_f)
+    show_N_error_dependence(N_values, errors, n_opt, eps_opt)
+
+    # ПУНКТ 5: Обчислення при N0
+    N0 = int(n_opt / 10)
+    N0 = (N0 // 8 + 1) * 8 if N0 % 8 != 0 else max(8, N0)
+    I_n0, _, _ = simpson_method(f, a, b, N0)
+    eps0 = abs(I_n0 - I_exact)
+
+    # ПУНКТ 6: Рунге-Ромберг
+    I_n0_2, _, _ = simpson_method(f, a, b, N0 // 2)
+    Ir = I_n0 + (I_n0 - I_n0_2) / 15
+    epsR = abs(Ir - I_exact)
+
+    # ПУНКТ 7: Ейткен та порядок p
+    I_n0_4, _, _ = simpson_method(f, a, b, N0 // 4)
+    IA = ((I_n0_2) ** 2 - I_n0 * I_n0_4) / (2 * I_n0_2 - (I_n0 + I_n0_4))
+    p = np.log2(abs((I_n0_4 - I_n0_2) / (I_n0_2 - I_n0)))
+    epsE = abs(IA - I_exact)
+
+    # ПУНКТ 8: Вивід результатів
+    print(f"--- РЕЗУЛЬТАТИ ЛАБОРАТОРНОЇ РОБОТИ ---")
+    print(f"Точне значення I0: {I_exact:.15f}")
+    print(f"Оптимальне N_opt: {n_opt}, отримана точність: {eps_opt:.2e}")
+    print(f"Обране N0: {N0}")
+    print(f"Похибка eps0: {eps0:.2e}")
+    print(f"Порядок точності p: {p:.4f}")
+    print(f"Уточнення Ir: {Ir:.15f}, похибка epsR: {epsR:.2e}")
+    print(f"Уточнення IA: {IA:.15f}, похибка epsE: {epsE:.2e}")
+
+    # ПУНКТ 9: Адаптивний метод
+    I_ad = adaptive_simpson(f, a, b, 1e-12)
+    print(f"Результат адаптивного методу: {I_ad:.15f}")
+
+if __name__ == "__main__":
+    main()
